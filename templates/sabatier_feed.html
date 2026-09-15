@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лента - Материалы реакции Сабатье</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="mobile-container">
+        <header class="app-header">
+            <h1 class="app-title">Синтез метана Сабатье</h1>
+        </header>
+
+        <main class="content-area">
+            {% if material %}
+            <div class="feed-viewport">
+                <video class="feed-video" autoplay loop muted playsinline poster="{{ material.image_url }}">
+                    <source src="{{ material.video_url }}" type="video/mp4">
+                </video>
+
+                <div class="feed-overlay-card">
+                    <h2 class="card-title">{{ material.title }}</h2>
+                    {% if material.description|length > 60 %}
+                    <input type="checkbox" id="material-desc-toggle" class="desc-toggle">
+                    <p class="card-desc">{{ material.description }}</p>
+                    <label for="material-desc-toggle" class="desc-toggle-btn"></label>
+                    {% else %}
+                    <p class="card-desc">{{ material.description }}</p>
+                    {% endif %}
+                </div>
+
+                <aside class="feed-params">
+                    <div class="param-chip">
+                        <span class="param-chip-label">Мин. для реакции, г</span>
+                        <span class="param-chip-value">{{ material.min_reaction_value }}</span>
+                    </div>
+
+                    <div class="param-chip">
+                        <span class="param-chip-label">Молярная масса, г/моль</span>
+                        <span class="param-chip-value">{{ material.molar_mass }}</span>
+                    </div>
+
+                    <div class="feed-like">
+                        <span class="feed-like-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </span>
+                        <span class="like-count">{{ liked_count }}</span>
+                    </div>
+
+                    <a href="/sabatier_materials/feed/{{ material.id }}?next=true" class="pill-btn pill-btn-light feed-next-btn">
+                        Далее
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </a>
+                </aside>
+            </div>
+            {% else %}
+            <p class="empty-state">Опубликованных материалов пока нет</p>
+            {% endif %}
+        </main>
+
+        <nav class="bottom-navbar">
+            <a href="/sabatier_materials/feed" class="nav-item active">
+                <img src="http://localhost:9000/sabatie-assets/tape_fill.png" alt="Лента" class="nav-icon">
+                <span>Лента</span>
+            </a>
+            <a href="/sabatier_materials/draft" class="nav-item">
+                <img src="http://localhost:9000/sabatie-assets/add.png" alt="Добавление" class="nav-icon">
+                <span>Добавление</span>
+            </a>
+            <a href="/sabatier_materials" class="nav-item">
+                <img src="http://localhost:9000/sabatie-assets/tail.png" alt="Плитка" class="nav-icon">
+                <span>Плитка</span>
+            </a>
+        </nav>
+    </div>
+</body>
+</html>

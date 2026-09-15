@@ -3,10 +3,12 @@
 __pycache__/
 *.py[cod]
 *$py.class
-.venv/
-venv/
+.synthesis-sabatie/
+synthesis-sabatie/
 env/
 
 .env
 .idea/
 .vscode/
+
+methods/

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Плитка - Материалы реакции Сабатье</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="mobile-container">
+        <header class="app-header">
+            <h1 class="app-title">Синтез метана Сабатье</h1>
+        </header>
+
+        <main class="content-area grid-padding">
+            <form method="GET" action="/sabatier_materials" class="filter-panel">
+                <label for="min-reaction-value" class="filter-label">Минимальное значение для типовой реакции, г</label>
+                <p class="filter-status">
+                    {% if min_reaction_value > 0 %}
+                    Показаны материалы от <strong>{{ min_reaction_value }} г</strong>
+                    {% else %}
+                    Показаны все материалы
+                    {% endif %}
+                </p>
+
+                <input type="range" id="min-reaction-value" name="min_reaction_value" class="filter-range"
+                       min="0" max="{{ slider_max }}" step="1" value="{{ min_reaction_value }}">
+                <div class="filter-scale">
+                    <span>0 г</span>
+                    <span>{{ slider_max }} г</span>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="pill-btn">Применить</button>
+                    <a href="/sabatier_materials" class="pill-btn">Сбросить</a>
+                </div>
+            </form>
+
+            <div class="section-head">
+                <span class="tag-chip">Найдено: {{ materials|length }}</span>
+            </div>
+
+            {% if materials %}
+            <div class="cards-grid">
+                {% for material in materials %}
+                <a href="/sabatier_materials/feed/{{ material.id }}" class="grid-card">
+                    <div class="grid-card-media">
+                        <img src="{{ material.image_url }}" alt="{{ material.title }}" class="grid-card-img">
+                        <span class="card-top-badge">{{ material.min_reaction_value }} г</span>
+                    </div>
+                    <div class="grid-card-body">
+                        <h3 class="grid-card-title">{{ material.title }}</h3>
+                        <div class="grid-card-likes">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                            <span>{{ material.liked_count }}</span>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-state">Нет материалов с таким минимальным значением</p>
+            {% endif %}
+        </main>
+
+        <nav class="bottom-navbar">
+            <a href="/sabatier_materials/feed" class="nav-item">
+                <img src="http://localhost:9000/sabatie-assets/tape.png" alt="Лента" class="nav-icon">
+                <span>Лента</span>
+            </a>
+            <a href="/sabatier_materials/draft" class="nav-item">
+                <img src="http://localhost:9000/sabatie-assets/add.png" alt="Добавление" class="nav-icon">
+                <span>Добавление</span>
+            </a>
+            <a href="/sabatier_materials" class="nav-item active">
+                <img src="http://localhost:9000/sabatie-assets/tail_fill.png" alt="Плитка" class="nav-icon">
+                <span>Плитка</span>
+            </a>
+        </nav>
+    </div>
+</body>
+</html>

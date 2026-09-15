@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавление - Материалы реакции Сабатье</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="mobile-container">
+        <header class="app-header">
+            <h1 class="app-title">Синтез метана Сабатье</h1>
+        </header>
+
+        <main class="content-area grid-padding">
+            <h2 class="section-subtitle">Черновик</h2>
+
+            {% if draft %}
+            <section class="form-section">
+                <h3 class="form-section-title">Медиа</h3>
+
+                <div class="media-field">
+                    <img src="{{ draft.image_url }}" alt="{{ draft.title }}" class="media-preview">
+                    <div class="media-info">
+                        <label for="material-image" class="form-label">Изображение</label>
+                        <span class="media-file-name">{{ draft.image_url.split('/')[-1] if draft.image_url else 'Файл не выбран' }}</span>
+                        <input type="file" id="material-image" name="image_file" accept="image/*" class="file-input" required>
+                    </div>
+                </div>
+
+                <div class="media-field">
+                    <video class="media-preview" autoplay loop muted playsinline poster="{{ draft.image_url }}">
+                        <source src="{{ draft.video_url }}" type="video/mp4">
+                    </video>
+                    <div class="media-info">
+                        <label for="material-video" class="form-label">Видео</label>
+                        <span class="media-file-name">{{ draft.video_url.split('/')[-1] if draft.video_url else 'Файл не выбран' }}</span>
+                        <input type="file" id="material-video" name="video_file" accept="video/*" class="file-input" required>
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h3 class="form-section-title">Описание</h3>
+
+                <div class="form-group">
+                    <label for="material-title" class="form-label">Название материала</label>
+                    <input type="text" id="material-title" name="title" class="form-control" value="{{ draft.title }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="material-description" class="form-label">Роль в реакции</label>
+                    <textarea id="material-description" name="description" class="form-control">{{ draft.description }}</textarea>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h3 class="form-section-title">Параметры</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="material-min-reaction-value" class="form-label">Мин. для реакции, г</label>
+                        <input type="number" id="material-min-reaction-value" name="min_reaction_value" class="form-control" min="0" step="1" value="{{ draft.min_reaction_value }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="material-molar-mass" class="form-label">Молярная масса, г/моль</label>
+                        <input type="number" id="material-molar-mass" name="molar_mass" class="form-control" min="0" step="0.001" value="{{ draft.molar_mass }}">
+                    </div>
+                </div>
+            </section>
+            {% else %}
+            <p class="empty-state">Черновик материала не найден</p>
+            {% endif %}
+        </main>
+
+        <nav class="bottom-navbar">
+            <a href="/sabatier_materials/feed" class="nav-item">
+                <img src="http://localhost:9000/sabatie-assets/tape.png" alt="Лента" class="nav-icon">
+                <span>Лента</span>
+            </a>
+            <a href="/sabatier_materials/draft" class="nav-item active">
+                <img src="http://localhost:9000/sabatie-assets/add_fill.png" alt="Добавление" class="nav-icon">
+                <span>Добавление</span>
+            </a>
+            <a href="/sabatier_materials" class="nav-item">
+                <img src="http://localhost:9000/sabatie-assets/tail.png" alt="Плитка" class="nav-icon">
+                <span>Плитка</span>
+            </a>
+        </nav>
+    </div>
+</body>
+</html>
