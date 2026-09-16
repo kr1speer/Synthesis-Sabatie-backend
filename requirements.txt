@@ -4,4 +4,4 @@ jinja2
 python-multipart
 aiofiles
 sqlalchemy
-alembic
+psycopg[binary]

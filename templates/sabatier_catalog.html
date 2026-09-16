@@ -22,7 +22,6 @@
                     Показаны все материалы
                     {% endif %}
                 </p>
-
                 <input type="range" id="min-reaction-value" name="min_reaction_value" class="filter-range"
                        min="0" max="{{ slider_max }}" step="1" value="{{ min_reaction_value }}">
                 <div class="filter-scale">
@@ -43,21 +42,27 @@
             {% if materials %}
             <div class="cards-grid">
                 {% for material in materials %}
-                <a href="/sabatier_materials/feed/{{ material.id }}" class="grid-card">
-                    <div class="grid-card-media">
-                        <img src="{{ material.image_url }}" alt="{{ material.title }}" class="grid-card-img">
-                        <span class="card-top-badge">{{ material.min_reaction_value }} г</span>
-                    </div>
-                    <div class="grid-card-body">
-                        <h3 class="grid-card-title">{{ material.title }}</h3>
-                        <div class="grid-card-likes">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                            </svg>
-                            <span>{{ material.liked_count }}</span>
+                <article class="grid-card">
+                    <a href="/sabatier_materials/feed/{{ material.id }}" class="grid-card-link">
+                        <div class="grid-card-media">
+                            <img src="{{ material.material_image_url or default_material_image_url }}" alt="{{ material.material_name }}" class="grid-card-img"
+                                 onerror="this.onerror=null;this.src='{{ default_material_image_url }}'">
+                            <span class="card-top-badge">{{ material.min_reaction_value }} г</span>
                         </div>
-                    </div>
-                </a>
+                        <div class="grid-card-body">
+                            <h3 class="grid-card-title">{{ material.material_name }}</h3>
+                            <div class="grid-card-likes">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                                <span>{{ material.likes|length }}</span>
+                            </div>
+                        </div>
+                    </a>
+                    <form method="POST" action="/sabatier_materials/{{ material.id }}/delete" class="grid-card-actions">
+                        <button type="submit" class="pill-btn pill-btn-light pill-btn-small">Удалить</button>
+                    </form>
+                </article>
                 {% endfor %}
             </div>
             {% else %}

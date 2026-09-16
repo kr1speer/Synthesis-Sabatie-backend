@@ -15,18 +15,20 @@
         <main class="content-area">
             {% if material %}
             <div class="feed-viewport">
-                <video class="feed-video" autoplay loop muted playsinline poster="{{ material.image_url }}">
-                    <source src="{{ material.video_url }}" type="video/mp4">
+                <video class="feed-video" autoplay loop muted playsinline poster="{{ material.material_image_url or default_material_image_url }}">
+                    {% if material.material_video_url %}
+                    <source src="{{ material.material_video_url }}" type="video/mp4">
+                    {% endif %}
+                    <source src="{{ default_material_video_url }}" type="video/mp4">
                 </video>
-
                 <div class="feed-overlay-card">
-                    <h2 class="card-title">{{ material.title }}</h2>
-                    {% if material.description|length > 60 %}
+                    <h2 class="card-title">{{ material.material_name }}</h2>
+                    {% if (material.reaction_role or '')|length > 60 %}
                     <input type="checkbox" id="material-desc-toggle" class="desc-toggle">
-                    <p class="card-desc">{{ material.description }}</p>
+                    <p class="card-desc">{{ material.reaction_role }}</p>
                     <label for="material-desc-toggle" class="desc-toggle-btn"></label>
                     {% else %}
-                    <p class="card-desc">{{ material.description }}</p>
+                    <p class="card-desc">{{ material.reaction_role or '' }}</p>
                     {% endif %}
                 </div>
 
@@ -38,7 +40,7 @@
 
                     <div class="param-chip">
                         <span class="param-chip-label">Молярная масса, г/моль</span>
-                        <span class="param-chip-value">{{ material.molar_mass }}</span>
+                        <span class="param-chip-value">{{ material.molar_mass|float }}</span>
                     </div>
 
                     <div class="feed-like">
@@ -47,7 +49,7 @@
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                             </svg>
                         </span>
-                        <span class="like-count">{{ liked_count }}</span>
+                        <span class="like-count">{{ material.likes|length }}</span>
                     </div>
 
                     <a href="/sabatier_materials/feed/{{ material.id }}?next=true" class="pill-btn pill-btn-light feed-next-btn">
@@ -60,7 +62,7 @@
                 </aside>
             </div>
             {% else %}
-            <p class="empty-state">Опубликованных материалов пока нет</p>
+            <p class="empty-state">Материал не найден: он удалён, не опубликован или его ещё нет</p>
             {% endif %}
         </main>
 

@@ -14,6 +14,7 @@
   --border-soft: rgba(0, 52, 155, 0.15); /* Разделители */
 }
 
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -473,24 +474,10 @@ body {
   gap: 4px;
 }
 
-.media-file-name {
-  font-size: 11px;
-  color: var(--text-muted);
-  word-break: break-all;
-}
-
 .file-input {
   width: 100%;
   font-size: 11px;
   color: var(--text-muted);
-}
-
-.file-input:invalid {
-  color: transparent;
-}
-
-.media-info:has(.file-input:valid) .media-file-name {
-  display: none;
 }
 
 .file-input::file-selector-button {
@@ -509,6 +496,9 @@ body {
 .file-input::file-selector-button:hover {
   background-color: var(--surface-white);
 }
+
+
+
 
 .form-row {
   display: grid;
@@ -584,4 +574,29 @@ textarea.form-control {
   width: 24px;
   height: 24px;
   object-fit: contain;
+}
+
+.grid-card-link {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  text-decoration: none;
+}
+
+.grid-card-actions {
+  padding: 0 12px 12px;
+}
+
+.pill-btn-small {
+  width: 100%;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.form-submit-btn {
+  width: 100%;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  padding: 12px 20px;
+  font-size: 15px;
 }

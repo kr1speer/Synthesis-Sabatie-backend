@@ -13,65 +13,88 @@
         </header>
 
         <main class="content-area grid-padding">
-            <h2 class="section-subtitle">Черновик</h2>
+            {% set material_image_url = (draft.material_image_url if draft else none) or default_material_image_url %}
+            {% set material_video_url = (draft.material_video_url if draft else none) or default_material_video_url %}
 
             {% if draft %}
-            <section class="form-section">
-                <h3 class="form-section-title">Медиа</h3>
-
-                <div class="media-field">
-                    <img src="{{ draft.image_url }}" alt="{{ draft.title }}" class="media-preview">
-                    <div class="media-info">
-                        <label for="material-image" class="form-label">Изображение</label>
-                        <span class="media-file-name">{{ draft.image_url.split('/')[-1] if draft.image_url else 'Файл не выбран' }}</span>
-                        <input type="file" id="material-image" name="image_file" accept="image/*" class="file-input" required>
-                    </div>
-                </div>
-
-                <div class="media-field">
-                    <video class="media-preview" autoplay loop muted playsinline poster="{{ draft.image_url }}">
-                        <source src="{{ draft.video_url }}" type="video/mp4">
-                    </video>
-                    <div class="media-info">
-                        <label for="material-video" class="form-label">Видео</label>
-                        <span class="media-file-name">{{ draft.video_url.split('/')[-1] if draft.video_url else 'Файл не выбран' }}</span>
-                        <input type="file" id="material-video" name="video_file" accept="video/*" class="file-input" required>
-                    </div>
-                </div>
-            </section>
-
-            <section class="form-section">
-                <h3 class="form-section-title">Описание</h3>
-
-                <div class="form-group">
-                    <label for="material-title" class="form-label">Название материала</label>
-                    <input type="text" id="material-title" name="title" class="form-control" value="{{ draft.title }}">
-                </div>
-
-                <div class="form-group">
-                    <label for="material-description" class="form-label">Роль в реакции</label>
-                    <textarea id="material-description" name="description" class="form-control">{{ draft.description }}</textarea>
-                </div>
-            </section>
-
-            <section class="form-section">
-                <h3 class="form-section-title">Параметры</h3>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="material-min-reaction-value" class="form-label">Мин. для реакции, г</label>
-                        <input type="number" id="material-min-reaction-value" name="min_reaction_value" class="form-control" min="0" step="1" value="{{ draft.min_reaction_value }}">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="material-molar-mass" class="form-label">Молярная масса, г/моль</label>
-                        <input type="number" id="material-molar-mass" name="molar_mass" class="form-control" min="0" step="0.001" value="{{ draft.molar_mass }}">
-                    </div>
-                </div>
-            </section>
+            <h2 class="section-subtitle">Черновик</h2>
+            <form method="POST" action="/sabatier_materials/draft/publish">
             {% else %}
-            <p class="empty-state">Черновик материала не найден</p>
+            <h2 class="section-subtitle">Новый материал</h2>
+            <form method="POST" action="/sabatier_materials/draft">
             {% endif %}
+                <section class="form-section">
+                    <h3 class="form-section-title">Медиа</h3>
+
+                    {# У полей выбора файлов нет name: в ЛР2 фото и видео не отправляются на сервер #}
+                    <div class="media-field">
+                        <img id="material-image-preview" src="{{ material_image_url }}" alt="Изображение материала" class="media-preview"
+                             onerror="this.onerror = null; this.src = '{{ default_material_image_url }}'">
+                        <div class="media-info">
+                            <label for="material-image" class="form-label">Изображение</label>
+                            <input type="file" id="material-image" accept="image/*" class="file-input"
+                                   onchange="showSelectedFile(this, 'material-image-preview')" {% if not draft %}required{% endif %}>
+                        </div>
+                    </div>
+
+                    <div class="media-field">
+                        <video id="material-video-preview" class="media-preview" autoplay loop muted playsinline poster="{{ material_image_url }}">
+                            <source src="{{ material_video_url }}" type="video/mp4">
+                            <source src="{{ default_material_video_url }}" type="video/mp4">
+                        </video>
+                        <div class="media-info">
+                            <label for="material-video" class="form-label">Видео</label>
+                            <input type="file" id="material-video" accept="video/*" class="file-input"
+                                   onchange="showSelectedFile(this, 'material-video-preview')" {% if not draft %}required{% endif %}>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <h3 class="form-section-title">Описание</h3>
+
+                    <div class="form-group">
+                        <label for="material-name" class="form-label">Название материала</label>
+                        <input type="text" id="material-name" name="material_name" class="form-control" maxlength="128" required
+                               value="{{ draft.material_name if draft else '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="material-reaction-role" class="form-label">Роль в реакции</label>
+                        <textarea id="material-reaction-role" name="reaction_role" class="form-control" maxlength="1024" required>{{ draft.reaction_role or '' if draft else '' }}</textarea>
+                    </div>
+                </section>
+
+                {% if draft %}
+                <section class="form-section">
+                    <h3 class="form-section-title">Параметры</h3>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="material-min-reaction-value" class="form-label">Мин. для реакции, г</label>
+                            <input type="number" id="material-min-reaction-value" name="min_reaction_value" class="form-control"
+                                   min="0" step="1" required value="{{ draft.min_reaction_value if draft.min_reaction_value else '' }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="material-molar-mass" class="form-label">Молярная масса, г/моль</label>
+                            <input type="number" id="material-molar-mass" name="molar_mass" class="form-control"
+                                   min="0.001" max="99999.999" step="0.001" required value="{{ draft.molar_mass|float if draft.molar_mass else '' }}">
+                        </div>
+                    </div>
+                </section>
+
+                <button type="submit" class="pill-btn form-submit-btn">Опубликовать</button>
+                {% else %}
+                <button type="submit" class="pill-btn form-submit-btn">
+                    Далее
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+                {% endif %}
+            </form>
         </main>
 
         <nav class="bottom-navbar">
@@ -89,5 +112,19 @@
             </a>
         </nav>
     </div>
+
+    <script>
+        function showSelectedFile(fileInput, previewId) {
+            if (fileInput.files.length === 0) {
+                return;
+            }
+            const preview = document.getElementById(previewId);
+            preview.src = URL.createObjectURL(fileInput.files[0]);
+            if (preview.tagName === "VIDEO") {
+                preview.load();
+                preview.play().catch(function () {});
+            }
+        }
+    </script>
 </body>
 </html>
