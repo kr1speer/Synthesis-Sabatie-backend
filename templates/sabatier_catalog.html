@@ -45,7 +45,7 @@
                 <article class="grid-card">
                     <a href="/sabatier_materials/feed/{{ material.id }}" class="grid-card-link">
                         <div class="grid-card-media">
-                            <img src="{{ material.material_image_url or default_material_image_url }}" alt="{{ material.material_name }}" class="grid-card-img"
+                            <img src="{{ material.material_image_url }}" alt="{{ material.material_name }}" class="grid-card-img"
                                  onerror="this.onerror=null;this.src='{{ default_material_image_url }}'">
                             <span class="card-top-badge">{{ material.min_reaction_value }} г</span>
                         </div>
@@ -55,7 +55,7 @@
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                                 </svg>
-                                <span>{{ material.likes|length }}</span>
+                                <span>{{ material.liked_count }}</span>
                             </div>
                         </div>
                     </a>
@@ -72,15 +72,15 @@
 
         <nav class="bottom-navbar">
             <a href="/sabatier_materials/feed" class="nav-item">
-                <img src="http://localhost:9000/sabatie-assets/tape.png" alt="Лента" class="nav-icon">
+                <img src="/static/img/tape.png" alt="Лента" class="nav-icon">
                 <span>Лента</span>
             </a>
             <a href="/sabatier_materials/draft" class="nav-item">
-                <img src="http://localhost:9000/sabatie-assets/add.png" alt="Добавление" class="nav-icon">
+                <img src="/static/img/add.png" alt="Добавление" class="nav-icon">
                 <span>Добавление</span>
             </a>
             <a href="/sabatier_materials" class="nav-item active">
-                <img src="http://localhost:9000/sabatie-assets/tail_fill.png" alt="Плитка" class="nav-icon">
+                <img src="/static/img/tail_fill.png" alt="Плитка" class="nav-icon">
                 <span>Плитка</span>
             </a>
         </nav>

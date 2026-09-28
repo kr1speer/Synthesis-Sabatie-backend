@@ -1,14 +1,26 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    func,
+    select,
+)
+from sqlalchemy.orm import Mapped, column_property, mapped_column
 
 from data.sabatier_database import Base
 
 MATERIAL_STATUS_DRAFT = "draft"
 MATERIAL_STATUS_PUBLISHED = "published"
 MATERIAL_STATUS_DELETED = "deleted"
+
+DEFAULT_MATERIAL_IMAGE_URL = "/static/img/default_material.png"
+DEFAULT_MATERIAL_VIDEO_URL = "/static/img/default_material.mp4"
 
 
 class ChemistUser(Base):
@@ -17,28 +29,9 @@ class ChemistUser(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     chemist_login: Mapped[str] = mapped_column(String(64))
+    chemist_password: Mapped[str] = mapped_column(String(128))
     full_name: Mapped[str] = mapped_column(String(128))
     is_moderator: Mapped[bool] = mapped_column(Boolean)
-
-
-class SabatierMaterial(Base):
-
-    __tablename__ = "sabatier_materials"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    material_name: Mapped[str] = mapped_column(String(128))
-    reaction_role: Mapped[str] = mapped_column(String(1024))
-    material_status: Mapped[str] = mapped_column(String(16))
-    material_image_url: Mapped[str | None] = mapped_column(String(512))
-    material_video_url: Mapped[str | None] = mapped_column(String(512))
-    # server_default: у черновика поля по теме ещё не заданы, СУБД подставит 0
-    min_reaction_value: Mapped[int] = mapped_column(Integer, server_default=text("0"))
-    molar_mass: Mapped[Decimal] = mapped_column(Numeric(8, 3), server_default=text("0"))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    creator_chemist_id: Mapped[int] = mapped_column(ForeignKey("chemist_users.id"))
-    formed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-
-    likes: Mapped[list["MaterialLike"]] = relationship()
 
 
 class MaterialLike(Base):
@@ -48,3 +41,27 @@ class MaterialLike(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     chemist_id: Mapped[int] = mapped_column(ForeignKey("chemist_users.id"))
     material_id: Mapped[int] = mapped_column(ForeignKey("sabatier_materials.id"))
+
+
+class SabatierMaterial(Base):
+
+    __tablename__ = "sabatier_materials"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    material_name: Mapped[str] = mapped_column(String(128))
+    material_description: Mapped[str | None] = mapped_column(String(1024))
+    material_status: Mapped[str] = mapped_column(String(16))
+    material_image_url: Mapped[str] = mapped_column(String(512))
+    material_video_url: Mapped[str] = mapped_column(String(512))
+    min_reaction_value: Mapped[int | None] = mapped_column(Integer)
+    molar_mass: Mapped[Decimal | None] = mapped_column(Numeric(8, 3))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    creator_chemist_id: Mapped[int] = mapped_column(ForeignKey("chemist_users.id"))
+    formed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+SabatierMaterial.liked_count = column_property(
+    select(func.count(MaterialLike.id))
+    .where(MaterialLike.material_id == SabatierMaterial.id)
+    .scalar_subquery()
+)

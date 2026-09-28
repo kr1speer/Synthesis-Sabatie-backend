@@ -15,20 +15,18 @@
         <main class="content-area">
             {% if material %}
             <div class="feed-viewport">
-                <video class="feed-video" autoplay loop muted playsinline poster="{{ material.material_image_url or default_material_image_url }}">
-                    {% if material.material_video_url %}
+                <video class="feed-video" autoplay loop muted playsinline poster="{{ material.material_image_url }}">
                     <source src="{{ material.material_video_url }}" type="video/mp4">
-                    {% endif %}
                     <source src="{{ default_material_video_url }}" type="video/mp4">
                 </video>
                 <div class="feed-overlay-card">
                     <h2 class="card-title">{{ material.material_name }}</h2>
-                    {% if (material.reaction_role or '')|length > 60 %}
+                    {% if (material.material_description or '')|length > 60 %}
                     <input type="checkbox" id="material-desc-toggle" class="desc-toggle">
-                    <p class="card-desc">{{ material.reaction_role }}</p>
+                    <p class="card-desc">{{ material.material_description }}</p>
                     <label for="material-desc-toggle" class="desc-toggle-btn"></label>
                     {% else %}
-                    <p class="card-desc">{{ material.reaction_role or '' }}</p>
+                    <p class="card-desc">{{ material.material_description or '' }}</p>
                     {% endif %}
                 </div>
 
@@ -49,7 +47,7 @@
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                             </svg>
                         </span>
-                        <span class="like-count">{{ material.likes|length }}</span>
+                        <span class="like-count">{{ material.liked_count }}</span>
                     </div>
 
                     <a href="/sabatier_materials/feed/{{ material.id }}?next=true" class="pill-btn pill-btn-light feed-next-btn">
@@ -62,21 +60,21 @@
                 </aside>
             </div>
             {% else %}
-            <p class="empty-state">Материал не найден: он удалён, не опубликован или его ещё нет</p>
+            <p class="empty-state">Материал не найден</p>
             {% endif %}
         </main>
 
         <nav class="bottom-navbar">
             <a href="/sabatier_materials/feed" class="nav-item active">
-                <img src="http://localhost:9000/sabatie-assets/tape_fill.png" alt="Лента" class="nav-icon">
+                <img src="/static/img/tape_fill.png" alt="Лента" class="nav-icon">
                 <span>Лента</span>
             </a>
             <a href="/sabatier_materials/draft" class="nav-item">
-                <img src="http://localhost:9000/sabatie-assets/add.png" alt="Добавление" class="nav-icon">
+                <img src="/static/img/add.png" alt="Добавление" class="nav-icon">
                 <span>Добавление</span>
             </a>
             <a href="/sabatier_materials" class="nav-item">
-                <img src="http://localhost:9000/sabatie-assets/tail.png" alt="Плитка" class="nav-icon">
+                <img src="/static/img/tail.png" alt="Плитка" class="nav-icon">
                 <span>Плитка</span>
             </a>
         </nav>

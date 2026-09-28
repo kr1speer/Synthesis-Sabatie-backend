@@ -13,8 +13,8 @@
         </header>
 
         <main class="content-area grid-padding">
-            {% set material_image_url = (draft.material_image_url if draft else none) or default_material_image_url %}
-            {% set material_video_url = (draft.material_video_url if draft else none) or default_material_video_url %}
+            {% set material_image_url = draft.material_image_url if draft else default_material_image_url %}
+            {% set material_video_url = draft.material_video_url if draft else default_material_video_url %}
 
             {% if draft %}
             <h2 class="section-subtitle">Черновик</h2>
@@ -59,10 +59,12 @@
                                value="{{ draft.material_name if draft else '' }}">
                     </div>
 
+                    {% if draft %}
                     <div class="form-group">
-                        <label for="material-reaction-role" class="form-label">Роль в реакции</label>
-                        <textarea id="material-reaction-role" name="reaction_role" class="form-control" maxlength="1024" required>{{ draft.reaction_role or '' if draft else '' }}</textarea>
+                        <label for="material-description" class="form-label">Краткое описание</label>
+                        <textarea id="material-description" name="material_description" class="form-control" maxlength="1024" required>{{ draft.material_description or '' }}</textarea>
                     </div>
+                    {% endif %}
                 </section>
 
                 {% if draft %}
@@ -73,13 +75,13 @@
                         <div class="form-group">
                             <label for="material-min-reaction-value" class="form-label">Мин. для реакции, г</label>
                             <input type="number" id="material-min-reaction-value" name="min_reaction_value" class="form-control"
-                                   min="0" step="1" required value="{{ draft.min_reaction_value if draft.min_reaction_value else '' }}">
+                                   min="0" step="1" required value="{{ draft.min_reaction_value if draft.min_reaction_value is not none else '' }}">
                         </div>
 
                         <div class="form-group">
                             <label for="material-molar-mass" class="form-label">Молярная масса, г/моль</label>
                             <input type="number" id="material-molar-mass" name="molar_mass" class="form-control"
-                                   min="0.001" max="99999.999" step="0.001" required value="{{ draft.molar_mass|float if draft.molar_mass else '' }}">
+                                   min="0.001" max="99999.999" step="0.001" required value="{{ draft.molar_mass|float if draft.molar_mass is not none else '' }}">
                         </div>
                     </div>
                 </section>
@@ -99,15 +101,15 @@
 
         <nav class="bottom-navbar">
             <a href="/sabatier_materials/feed" class="nav-item">
-                <img src="http://localhost:9000/sabatie-assets/tape.png" alt="Лента" class="nav-icon">
+                <img src="/static/img/tape.png" alt="Лента" class="nav-icon">
                 <span>Лента</span>
             </a>
             <a href="/sabatier_materials/draft" class="nav-item active">
-                <img src="http://localhost:9000/sabatie-assets/add_fill.png" alt="Добавление" class="nav-icon">
+                <img src="/static/img/add_fill.png" alt="Добавление" class="nav-icon">
                 <span>Добавление</span>
             </a>
             <a href="/sabatier_materials" class="nav-item">
-                <img src="http://localhost:9000/sabatie-assets/tail.png" alt="Плитка" class="nav-icon">
+                <img src="/static/img/tail.png" alt="Плитка" class="nav-icon">
                 <span>Плитка</span>
             </a>
         </nav>

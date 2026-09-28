@@ -16,9 +16,10 @@
 | Заявка на синтез | Расчёт массы метана по количествам материалов (следующие ЛР) | `synthesis_request` |
 | Позиция заявки | Связь «заявка ↔ материал» с указанным количеством (следующие ЛР) | `synthesis_request_item` |
 
-Поля предметной области у материала (оба числовые): `min_reaction_value` — минимальная
-масса вещества в граммах для типовой реакции (получение 1 кг CH₄), фильтруемое поле;
-`molar_mass` — молярная масса вещества в г/моль, используется в формуле расчёта.
+Поля предметной области у материала (оба числовые и необязательные): `min_reaction_value` —
+минимальная масса вещества в граммах для типовой реакции (получение 1 кг CH₄), фильтруемое поле;
+`molar_mass` — молярная масса вещества в г/моль, используется в формуле расчёта. Оба поля
+и краткое описание заполняются при публикации, поэтому у черновика они пустые.
 
 ## База данных (ЛР2)
 
@@ -28,8 +29,8 @@ PostgreSQL 18, работа с БД через ORM SQLAlchemy, модели — 
 
 | Таблица | Столбцы |
 |---|---|
-| `chemist_users` | `id` PK, `chemist_login` varchar(64) unique, `full_name` varchar(128), `is_moderator` boolean |
-| `sabatier_materials` | `id` PK, `material_name` varchar(128), `reaction_role` varchar(1024), `material_status` varchar(16) (`draft` / `published` / `deleted`), `material_image_url` varchar(512), `material_video_url` varchar(512), `min_reaction_value` integer, `molar_mass` numeric(8,3), `created_at` timestamptz, `creator_chemist_id` FK → `chemist_users`, `formed_at` timestamptz |
+| `chemist_users` | `id` PK, `chemist_login` varchar(64) unique, `chemist_password` varchar(128), `full_name` varchar(128), `is_moderator` boolean |
+| `sabatier_materials` | `id` PK, `material_name` varchar(128), `material_description` varchar(1024) NULL, `material_status` varchar(16) (`draft` / `published` / `deleted`), `material_image_url` varchar(512) NOT NULL, `material_video_url` varchar(512) NOT NULL, `min_reaction_value` integer NULL, `molar_mass` numeric(8,3) NULL, `created_at` timestamptz, `creator_chemist_id` FK → `chemist_users`, `formed_at` timestamptz NULL |
 | `material_likes` | `id` PK, `chemist_id` FK → `chemist_users`, `material_id` FK → `sabatier_materials`, unique (`chemist_id`, `material_id`) |
 
 У каждого инженера-технолога не более одного черновика — частичный уникальный индекс
@@ -38,24 +39,28 @@ PostgreSQL 18, работа с БД через ORM SQLAlchemy, модели — 
 | Файл | Что делает |
 |---|---|
 | `01_create_schema.sql` | создаёт три таблицы |
-| `02_seed_data.sql` | добавляет 10 инженеров-технологов |
+| `02_seed_data.sql` | добавляет инженеров-технологов, материалы и лайки |
 | `03_show_order_queries.sql` | запросы в порядке показа ЛР2 |
-
-Материалы и лайки вносятся вручную через Adminer.
 
 Маршруты ЛР2 (авторизации нет, действия выполняются от имени инженера-технолога `id = 1`):
 
 | Метод | URL | Реализация |
 |---|---|---|
-| GET | `/sabatier_materials/feed/{material_id}` (`?next=true` — следующий) | ORM |
+| GET | `/sabatier_materials/feed/{material_id}` (`?next=true` — следующий) | ORM, одна строка из БД |
 | GET | `/sabatier_materials/draft` | ORM |
 | GET | `/sabatier_materials?min_reaction_value=N` | ORM |
-| POST | `/sabatier_materials/draft` — кнопка «Далее», создание черновика | ORM |
-| POST | `/sabatier_materials/draft/publish` — кнопка «Опубликовать» | ORM |
+| POST | `/sabatier_materials/draft` — кнопка «Далее», только название | ORM |
+| POST | `/sabatier_materials/draft/publish` — описание и оба поля по теме | ORM |
 | POST | `/sabatier_materials/{material_id}/delete` — логическое удаление | SQL `UPDATE` через курсор |
 
-Если ссылки на фото и видео пустые или недоступны, показываются файлы по умолчанию
-из `static/img/default_material.png` и `static/img/default_material.mp4`.
+Лента читает из БД ровно одну строку, следующий материал ищет сама БД
+(`WHERE id > :id ORDER BY id LIMIT 1`), поэтому пропуски в id не мешают.
+
+Столбцы `material_image_url` и `material_video_url` обязательные: у нового материала
+в них записываются файлы по умолчанию `static/img/default_material.png` и
+`static/img/default_material.mp4`. Они лежат на SSR-сервере рядом с иконками
+интерфейса (`static/img`), MinIO для файлов по умолчанию не используется.
+Если ссылка недоступна, разметка подставляет тот же файл по умолчанию.
 
 ## Запуск
 
