@@ -33,15 +33,6 @@ PostgreSQL 18, работа с БД через ORM SQLAlchemy, модели — 
 | `sabatier_materials` | `id` PK, `material_name` varchar(128), `material_description` varchar(1024) NULL, `material_status` varchar(16) (`draft` / `published` / `deleted`), `material_image_url` varchar(512) NOT NULL, `material_video_url` varchar(512) NOT NULL, `min_reaction_value` integer NULL, `molar_mass` numeric(8,3) NULL, `created_at` timestamptz, `creator_chemist_id` FK → `chemist_users`, `formed_at` timestamptz NULL |
 | `material_likes` | `id` PK, `chemist_id` FK → `chemist_users`, `material_id` FK → `sabatier_materials`, unique (`chemist_id`, `material_id`) |
 
-У каждого инженера-технолога не более одного черновика — частичный уникальный индекс
-`uq_sabatier_materials_one_draft`. SQL-скрипты лежат в `sql/`:
-
-| Файл | Что делает |
-|---|---|
-| `01_create_schema.sql` | создаёт три таблицы |
-| `02_seed_data.sql` | добавляет инженеров-технологов, материалы и лайки |
-| `03_show_order_queries.sql` | запросы в порядке показа ЛР2 |
-
 Маршруты ЛР2 (авторизации нет, действия выполняются от имени инженера-технолога `id = 1`):
 
 | Метод | URL | Реализация |
