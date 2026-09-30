@@ -1,0 +1,141 @@
+{
+  "info": {
+    "name": "Синтез метана Сабатье — ЛР3",
+    "description": "Веб-сервис заявочной системы по теме «Синтез метана по реакции Сабатье». Запросы идут в порядке показа лабораторной работы.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8000/api" },
+    { "key": "materialId", "value": "6" }
+  ],
+  "item": [
+    {
+      "name": "1. GET список материалов (с фильтром)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/sabatier_materials?min_reaction_value=3000",
+          "host": ["{{baseUrl}}"],
+          "path": ["sabatier_materials"],
+          "query": [
+            { "key": "min_reaction_value", "value": "3000", "description": "минимальная масса для типовой реакции, г" }
+          ]
+        },
+        "description": "Только опубликованные материалы. У каждого is_mine = 1, если создатель совпадает с текущим пользователем."
+      }
+    },
+    {
+      "name": "2. POST добавление материала (картинка и видео)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "material_name", "value": "Метанол CH3OH", "type": "text" },
+            { "key": "material_image", "type": "file", "src": [], "description": "выберите файл изображения" },
+            { "key": "material_video", "type": "file", "src": [], "description": "выберите файл короткого видео" }
+          ]
+        },
+        "url": { "raw": "{{baseUrl}}/sabatier_materials", "host": ["{{baseUrl}}"], "path": ["sabatier_materials"] },
+        "description": "Файлы уходят в MinIO под именами на латинице, в БД сохраняются их имена. Файлы необязательные: без них у черновика остаются медиа по умолчанию с SSR-сервера. Второй черновик у пользователя невозможен — вернётся 409."
+      }
+    },
+    {
+      "name": "3. GET черновик",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/sabatier_materials/draft", "host": ["{{baseUrl}}"], "path": ["sabatier_materials", "draft"] },
+        "description": "Черновик текущего пользователя, ид не указывается: он не более одного. Описание и оба поля по теме ещё null."
+      }
+    },
+    {
+      "name": "4. PUT публикация материала",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"material_description\": \"Промежуточный продукт гидрирования CO2.\",\n  \"min_reaction_value\": 320,\n  \"molar_mass\": 32.042\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/sabatier_materials/{{materialId}}/publish",
+          "host": ["{{baseUrl}}"],
+          "path": ["sabatier_materials", "{{materialId}}", "publish"]
+        },
+        "description": "Смена статуса на «опубликован». Статус с клиента не передаётся. Повторный вызов вернёт 404: вернуть материал в черновик нельзя."
+      }
+    },
+    {
+      "name": "5. GET лента без ид",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/sabatier_materials/feed", "host": ["{{baseUrl}}"], "path": ["sabatier_materials", "feed"] },
+        "description": "Из БД читается ровно одна строка — первый опубликованный материал. В ответе есть liked_count (сколько лайков всего) и is_liked (поставил ли лайк текущий пользователь)."
+      }
+    },
+    {
+      "name": "6. POST лайк",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"liked\": 1\n}" },
+        "url": {
+          "raw": "{{baseUrl}}/sabatier_materials/{{materialId}}/like",
+          "host": ["{{baseUrl}}"],
+          "path": ["sabatier_materials", "{{materialId}}", "like"]
+        },
+        "description": "1 ставит лайк, 0 отменяет. В ответе видно изменившиеся liked_count и is_liked."
+      }
+    },
+    {
+      "name": "7. DELETE удаление материала",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/sabatier_materials/{{materialId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["sabatier_materials", "{{materialId}}"]
+        },
+        "description": "Только логическое удаление и только своего материала. Ответ 204. После него материал пропадает из списка и из ленты."
+      }
+    },
+    {
+      "name": "8. POST регистрация инженера-технолога",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chemist_login\": \"t.novikov\",\n  \"chemist_password\": \"novikov_2026\",\n  \"full_name\": \"Новиков Тимур Олегович\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/chemist_users/register", "host": ["{{baseUrl}}"], "path": ["chemist_users", "register"] },
+        "description": "Признак модератора с клиента не принимается. Повторный логин вернёт 409."
+      }
+    },
+    {
+      "name": "9. POST аутентификация (заглушка ЛР4)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"chemist_login\": \"t.novikov\",\n  \"chemist_password\": \"novikov_2026\"\n}" },
+        "url": { "raw": "{{baseUrl}}/chemist_users/login", "host": ["{{baseUrl}}"], "path": ["chemist_users", "login"] },
+        "description": "Заглушка: реальная авторизация появится в ЛР4. Ответ 204."
+      }
+    },
+    {
+      "name": "10. POST деавторизация (заглушка ЛР4)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/chemist_users/logout", "host": ["{{baseUrl}}"], "path": ["chemist_users", "logout"] },
+        "description": "Заглушка: реальная деавторизация появится в ЛР4. Ответ 204."
+      }
+    }
+
+  ]
+}
