@@ -24,7 +24,6 @@ router = APIRouter(prefix="/api/sabatier_materials", tags=["Материалы �
 
 
 def liked_by_me(chemist_id: int):
-    """Подзапрос: поставил ли текущий пользователь лайк этому материалу."""
     return (
         select(MaterialLike.id)
         .where(
