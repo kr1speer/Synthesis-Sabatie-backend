@@ -181,44 +181,6 @@ def create_sabatier_material(
     return to_out(load_material_row(session, material.id, chemist_id), chemist_id)
 
 
-@router.put("/{material_id}/image", response_model=SabatierMaterialOut)
-def replace_sabatier_material_image(
-    material_id: int,
-    material_image: UploadFile = File(...),
-    session: Session = Depends(get_sabatier_session),
-):
-    chemist_id = get_current_chemist_id()
-
-    material = get_own_material(session, material_id, chemist_id)
-    if material is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-    material.material_image_name = store_material_file(
-        material_image, material.material_image_name, DEFAULT_MATERIAL_IMAGE_NAME
-    )
-    session.commit()
-    return to_out(load_material_row(session, material_id, chemist_id), chemist_id)
-
-
-@router.put("/{material_id}/video", response_model=SabatierMaterialOut)
-def replace_sabatier_material_video(
-    material_id: int,
-    material_video: UploadFile = File(...),
-    session: Session = Depends(get_sabatier_session),
-):
-    chemist_id = get_current_chemist_id()
-
-    material = get_own_material(session, material_id, chemist_id)
-    if material is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-    material.material_video_name = store_material_file(
-        material_video, material.material_video_name, DEFAULT_MATERIAL_VIDEO_NAME
-    )
-    session.commit()
-    return to_out(load_material_row(session, material_id, chemist_id), chemist_id)
-
-
 @router.put("/{material_id}/publish", response_model=SabatierMaterialOut)
 def publish_sabatier_material(
     material_id: int,
