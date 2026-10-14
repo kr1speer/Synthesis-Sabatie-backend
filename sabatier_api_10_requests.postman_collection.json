@@ -1,0 +1,315 @@
+{
+ "info": {
+  "name": "Синтез метана Сабатье — веб-сервис",
+  "description": "Веб-сервис заявочной системы по теме «Синтез метана по реакции Сабатье»: 10 методов двух доменов в порядке показа. Авторизация — сессии в Redis, идентификатор сессии ходит в куке session_id.\n\nПорядок работы: выполнить запрос 9 (аутентификация), скопировать значение куки session_id из заголовка Set-Cookie или из вкладки Application браузера в переменную коллекции sessionId — она подставляется заголовком Cookie во все методы создателя. Вкладка Authorization и меню Cookie в Postman не используются.\n\nПеременные: baseUrl — адрес api, sessionId — кука своей сессии, materialId — ид материала, с которым идёт работа.\n\nДля показа ЛР4 есть вторая коллекция — sabatier_api.postman_collection.json: там те же методы, но GET списка и PUT публикации продублированы с разными состояниями куки, чтобы показать 401, 403 и 200.",
+  "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+ },
+ "variable": [
+  {
+   "key": "baseUrl",
+   "value": "http://127.0.0.1:8000/api"
+  },
+  {
+   "key": "sessionId",
+   "value": "",
+   "description": "кука session_id своей сессии, из ответа запроса 9 или из вкладки Application"
+  },
+  {
+   "key": "materialId",
+   "value": "6"
+  }
+ ],
+ "item": [
+  {
+   "name": "1. GET список материалов (с фильтром)",
+   "request": {
+    "method": "GET",
+    "header": [
+     {
+      "key": "Cookie",
+      "value": "session_id={{sessionId}}",
+      "description": "кука своей сессии, скопирована из вкладки Application в браузере"
+     }
+    ],
+    "url": {
+     "raw": "{{baseUrl}}/sabatier_materials?min_reaction_value=3000",
+     "host": [
+      "{{baseUrl}}"
+     ],
+     "path": [
+      "sabatier_materials"
+     ],
+     "query": [
+      {
+       "key": "min_reaction_value",
+       "value": "3000",
+       "description": "минимальная масса для типовой реакции, г"
+      }
+     ]
+    },
+    "description": "Только опубликованные материалы. Метод чтения: работает и без заголовка Cookie, список от этого не меняется. Кука влияет лишь на два признака: is_mine = 1 у материалов текущего пользователя, is_liked = 1 у тех, которым он поставил лайк. Фильтр min_reaction_value выполняется в SQL-запросе на бэкенде."
+   }
+  },
+  {
+   "name": "2. POST добавление материала (картинка и видео)",
+   "request": {
+    "method": "POST",
+    "header": [
+     {
+      "key": "Cookie",
+      "value": "session_id={{sessionId}}",
+      "description": "кука своей сессии, скопирована из вкладки Application в браузере"
+     }
+    ],
+    "body": {
+     "mode": "formdata",
+     "formdata": [
+      {
+       "key": "material_name",
+       "value": "Метанол CH3OH",
+       "type": "text"
+      },
+      {
+       "key": "material_image",
+       "type": "file",
+       "src": [],
+       "description": "выберите файл изображения"
+      },
+      {
+       "key": "material_video",
+       "type": "file",
+       "src": [],
+       "description": "выберите файл короткого видео"
+      }
+     ]
+    },
+    "url": {
+     "raw": "{{baseUrl}}/sabatier_materials",
+     "host": [
+      "{{baseUrl}}"
+     ],
+     "path": [
+      "sabatier_materials"
+     ]
+    },
+    "description": "Создатель материала подставляется автоматически из сессии — в теле запроса его нет. Файлы уходят в MinIO под именами на латинице, в БД сохраняются только имена. Файлы необязательные: без них у черновика остаются медиа по умолчанию с SSR-сервера. Второй черновик у пользователя невозможен — вернётся 409. Без куки — 401."
+   }
+  },
+  {
+   "name": "3. GET черновик",
+   "request": {
+    "method": "GET",
+    "header": [
+     {
+      "key": "Cookie",
+      "value": "session_id={{sessionId}}",
+      "description": "кука своей сессии, скопирована из вкладки Application в браузере"
+     }
+    ],
+    "url": {
+     "raw": "{{baseUrl}}/sabatier_materials/draft",
+     "host": [
+      "{{baseUrl}}"
+     ],
+     "path": [
+      "sabatier_materials",
+      "draft"
+     ]
+    },
+    "description": "Черновик пользователя из сессии, ид не указывается: он не более одного. Описание и оба поля по теме ещё null. Без куки — 401."
+   }
+  },
+  {
+   "name": "4. PUT публикация материала",
+   "request": {
+    "method": "PUT",
+    "header": [
+     {
+      "key": "Content-Type",
+      "value": "application/json"
+     },
+     {
+      "key": "Cookie",
+      "value": "session_id={{sessionId}}",
+      "description": "кука своей сессии, скопирована из вкладки Application в браузере"
+     }
+    ],
+    "body": {
+     "mode": "raw",
+     "raw": "{\n  \"material_description\": \"Промежуточный продукт гидрирования CO2.\",\n  \"min_reaction_value\": 320,\n  \"molar_mass\": 32.042\n}"
+    },
+    "url": {
+     "raw": "{{baseUrl}}/sabatier_materials/{{materialId}}/publish",
+     "host": [
+      "{{baseUrl}}"
+     ],
+     "path": [
+      "sabatier_materials",
+      "{{materialId}}",
+      "publish"
+     ]
+    },
+    "description": "Смена статуса на «опубликован». Статус с клиента не передаётся. Повторный вызов вернёт 404: вернуть материал в черновик нельзя. Без куки — 401, на чужой материал — 403."
+   }
+  },
+  {
+   "name": "5. GET лента без ид",
+   "request": {
+    "method": "GET",
+    "header": [
+     {
+      "key": "Cookie",
+      "value": "session_id={{sessionId}}",
+      "description": "кука своей сессии, скопирована из вкладки Application в браузере"
+     }
+    ],
+    "url": {
+     "raw": "{{baseUrl}}/sabatier_materials/feed",
+     "host": [
+      "{{baseUrl}}"
+     ],
+     "path": [
+      "sabatier_materials",
+      "feed"
+     ]
+    },
+    "description": "Из БД читается ровно одна строка — первый опубликованный материал. Метод чтения, работает и без куки. В ответе есть liked_count (сколько лайков всего) и is_liked (поставил ли лайк текущий пользователь)."
+   }
+  },
+  {
+   "name": "6. POST лайк",
+   "request": {
+    "method": "POST",
+    "header": [
+     {
+      "key": "Content-Type",
+      "value": "application/json"
+     },
+     {
+      "key": "Cookie",
+      "value": "session_id={{sessionId}}",
+      "description": "кука своей сессии, скопирована из вкладки Application в браузере"
+     }
+    ],
+    "body": {
+     "mode": "raw",
+     "raw": "{\n  \"liked\": 1\n}"
+    },
+    "url": {
+     "raw": "{{baseUrl}}/sabatier_materials/{{materialId}}/like",
+     "host": [
+      "{{baseUrl}}"
+     ],
+     "path": [
+      "sabatier_materials",
+      "{{materialId}}",
+      "like"
+     ]
+    },
+    "description": "Лайк ставит пользователь из сессии: 1 ставит, 0 отменяет. Лайкать можно и чужой материал, поэтому 403 здесь нет. В ответе видно изменившиеся liked_count и is_liked. Без куки — 401."
+   }
+  },
+  {
+   "name": "7. DELETE удаление материала",
+   "request": {
+    "method": "DELETE",
+    "header": [
+     {
+      "key": "Cookie",
+      "value": "session_id={{sessionId}}",
+      "description": "кука своей сессии, скопирована из вкладки Application в браузере"
+     }
+    ],
+    "url": {
+     "raw": "{{baseUrl}}/sabatier_materials/{{materialId}}",
+     "host": [
+      "{{baseUrl}}"
+     ],
+     "path": [
+      "sabatier_materials",
+      "{{materialId}}"
+     ]
+    },
+    "description": "Только логическое удаление и только своего материала. Ответ 204. После него материал пропадает из списка и из ленты. Без куки — 401, на чужой материал — 403."
+   }
+  },
+  {
+   "name": "8. POST регистрация инженера-технолога",
+   "request": {
+    "method": "POST",
+    "header": [
+     {
+      "key": "Content-Type",
+      "value": "application/json"
+     }
+    ],
+    "body": {
+     "mode": "raw",
+     "raw": "{\n  \"chemist_login\": \"t.novikov\",\n  \"chemist_password\": \"novikov_2026\",\n  \"full_name\": \"Новиков Тимур Олегович\"\n}"
+    },
+    "url": {
+     "raw": "{{baseUrl}}/chemist_users/register",
+     "host": [
+      "{{baseUrl}}"
+     ],
+     "path": [
+      "chemist_users",
+      "register"
+     ]
+    },
+    "description": "Признак модератора с клиента не принимается, новый пользователь — обычный создатель. Пароль в ответе не возвращается. Повторный логин вернёт 409. Сессия при регистрации не создаётся."
+   }
+  },
+  {
+   "name": "9. POST аутентификация",
+   "request": {
+    "method": "POST",
+    "header": [
+     {
+      "key": "Content-Type",
+      "value": "application/json"
+     }
+    ],
+    "body": {
+     "mode": "raw",
+     "raw": "{\n  \"chemist_login\": \"a.karpov\",\n  \"chemist_password\": \"karpov_2026\"\n}"
+    },
+    "url": {
+     "raw": "{{baseUrl}}/chemist_users/login",
+     "host": [
+      "{{baseUrl}}"
+     ],
+     "path": [
+      "chemist_users",
+      "login"
+     ]
+    },
+    "description": "Проверяет логин и пароль по таблице пользователей, создаёт сессию в Redis и отдаёт её идентификатор заголовком Set-Cookie: session_id=... В теле ответа — признак модератора для фронтенда. Неверная пара логин-пароль даёт 401. Значение куки положите в переменную коллекции sessionId."
+   }
+  },
+  {
+   "name": "10. POST деавторизация",
+   "request": {
+    "method": "POST",
+    "header": [
+     {
+      "key": "Cookie",
+      "value": "session_id={{sessionId}}",
+      "description": "кука своей сессии, скопирована из вкладки Application в браузере"
+     }
+    ],
+    "url": {
+     "raw": "{{baseUrl}}/chemist_users/logout",
+     "host": [
+      "{{baseUrl}}"
+     ],
+     "path": [
+      "chemist_users",
+      "logout"
+     ]
+    },
+    "description": "Удаляет сессию из Redis и гасит куку. После него тот же заголовок Cookie на защищённом методе даёт 401, а ключ session:<ид> из Redis исчезает. Без куки — 401."
+   }
+  }
+ ]
+}

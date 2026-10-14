@@ -49,3 +49,4 @@ class ChemistUserOut(BaseModel):
     id: int
     chemist_login: str
     full_name: str
+    is_moderator: bool

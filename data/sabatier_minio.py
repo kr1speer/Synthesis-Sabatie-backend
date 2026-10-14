@@ -49,6 +49,3 @@ def upload_material_file(upload_file) -> str:
     )
     return object_name
 
-
-def remove_material_file(object_name: str) -> None:
-    minio_client.remove_object(SABATIER_MINIO_BUCKET, object_name)

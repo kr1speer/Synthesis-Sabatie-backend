@@ -21,33 +21,33 @@
 `molar_mass` — молярная масса вещества в г/моль, используется в формуле расчёта. Оба поля
 и краткое описание заполняются при публикации, поэтому у черновика они пустые.
 
-## Веб-сервис (ЛР3)
+## Веб-сервис (ЛР3, ЛР4)
 
-FastAPI, взаимодействие с БД только через ORM SQLAlchemy, файлы в S3-совместимом MinIO.
-Шаблонов нет: сервис отдаёт JSON и тестируется в Postman.
+FastAPI, взаимодействие с БД только через ORM SQLAlchemy, файлы в S3-совместимом MinIO,
+сессии в Redis. Шаблонов нет: сервис отдаёт JSON и тестируется в Postman и swagger.
 
-Авторизации ещё нет — пользователь-создатель зафиксирован константой и раздаётся
-функцией-singleton `get_current_chemist_id()` из `data/sabatier_current_chemist.py`.
+Описание всех методов доступно в swagger — http://127.0.0.1:8000/docs, спецификация
+OpenAPI — http://127.0.0.1:8000/openapi.json.
 
 ### Домен «Материал реакции» — `/api/sabatier_materials`
 
-| Метод | URL | Тело запроса | Ответ |
-|---|---|---|---|
-| GET | `/api/sabatier_materials?min_reaction_value=N` | — | `200` список опубликованных |
-| GET | `/api/sabatier_materials/feed` | — | `200` одна строка — первый материал ленты |
-| GET | `/api/sabatier_materials/draft` | — | `200` черновик пользователя, `404` если его нет |
-| POST | `/api/sabatier_materials` | `material_name`, `material_image`, `material_video` | `201` созданный черновик, `409` если черновик уже есть |
-| PUT | `/api/sabatier_materials/{id}/publish` | `material_description`, `min_reaction_value`, `molar_mass` | `200` опубликованный материал, `404` если это не свой черновик |
-| DELETE | `/api/sabatier_materials/{id}` | — | `204`, статус меняется на «удалён» |
-| POST | `/api/sabatier_materials/{id}/like` | `liked` 0 или 1 | `200` материал с новыми `liked_count` и `is_liked` |
+| Метод | URL | Доступ | Тело запроса | Ответ |
+|---|---|---|---|---|
+| GET | `/api/sabatier_materials?min_reaction_value=N` | гость | — | `200` список опубликованных |
+| GET | `/api/sabatier_materials/feed?material_id=N&next=true` | гость | — | `200` одна строка: без `material_id` первый материал ленты, с ним — указанный, вместе с `next` — следующий за ним, `404` если такого нет |
+| GET | `/api/sabatier_materials/draft` | создатель | — | `200` черновик пользователя, `401` гостю, `404` если черновика нет |
+| POST | `/api/sabatier_materials` | создатель | `material_name`, `material_image`, `material_video` | `201` созданный черновик, `401` гостю, `409` если черновик уже есть |
+| PUT | `/api/sabatier_materials/{id}/publish` | создатель | `material_description`, `min_reaction_value`, `molar_mass` | `200` опубликованный материал, `401` гостю, `403` на чужой материал, `404` если он уже не черновик |
+| DELETE | `/api/sabatier_materials/{id}` | создатель | — | `204`, статус меняется на «удалён», `401` гостю, `403` на чужой материал |
+| POST | `/api/sabatier_materials/{id}/like` | создатель | `liked` 0 или 1 | `200` материал с новыми `liked_count` и `is_liked`, `401` гостю |
 
 ### Домен «Инженер-технолог» — `/api/chemist_users`
 
-| Метод | URL | Тело запроса | Ответ |
-|---|---|---|---|
-| POST | `/api/chemist_users/register` | `chemist_login`, `chemist_password`, `full_name` | `201` созданный пользователь, `409` если логин занят |
-| POST | `/api/chemist_users/login` | `chemist_login`, `chemist_password` | `204`, заглушка до ЛР4 |
-| POST | `/api/chemist_users/logout` | — | `204`, заглушка до ЛР4 |
+| Метод | URL | Доступ | Тело запроса | Ответ |
+|---|---|---|---|---|
+| POST | `/api/chemist_users/register` | гость | `chemist_login`, `chemist_password`, `full_name` | `201` созданный пользователь, `409` если логин занят |
+| POST | `/api/chemist_users/login` | гость | `chemist_login`, `chemist_password` | `200` пользователь с признаком модератора и `Set-Cookie: session_id`, `401` при неверной паре |
+| POST | `/api/chemist_users/logout` | создатель | — | `204`, сессия удалена из Redis и кука погашена, `401` если сессии нет |
 
 ### Правила веб-сервиса
 
@@ -60,6 +60,9 @@ FastAPI, взаимодействие с БД только через ORM SQLAlc
 - Набор полей в json материала всегда один и тот же, незаполненные приходят как `null`.
   Статуса в ответе нет — он нужен только в БД.
 - Фильтрация выполняется на бэкенде, в SQL-запросе.
+- Без аутентификации доступно только чтение: список материалов и лента. Все методы
+  создателя требуют действующей сессии.
+- Создатель материала подставляется автоматически из сессии — в теле запроса его нет.
 - Количество лайков и признак «лайкнул ли текущий пользователь» считает СУБД
   подзапросами в том же `SELECT`, что и сам материал.
 
@@ -68,15 +71,42 @@ FastAPI, взаимодействие с БД только через ORM SQLAlc
 `liked_count`, `is_mine` (1, если создатель — текущий пользователь),
 `is_liked` (1, если текущий пользователь уже поставил лайк).
 
+### Авторизация (ЛР4)
+
+Аутентификация — `POST /api/chemist_users/login`: метод сверяет логин и пароль
+с таблицей `chemist_users`, создаёт сессию в Redis и отдаёт её идентификатор
+в заголовке `Set-Cookie: session_id=...` (кука `HttpOnly`, время жизни сутки).
+В теле ответа возвращается признак модератора — по нему фронтенд меняет
+представление приложения.
+
+Сессия в Redis — хеш `session:<ид сессии>` с полями `chemist_id`, `chemist_login`
+и `is_moderator`, срок жизни ключа выставлен через `EXPIRE`. Логин в сессии хранится
+затем, чтобы по активным сессиям было видно не только ид, но и самого пользователя.
+Код — `data/sabatier_redis.py`.
+
+Авторизация — зависимости из `api/chemist_user_auth.py`:
+
+| Зависимость | Где используется | Поведение |
+|---|---|---|
+| `get_current_chemist` | методы создателя | берёт куку `session_id`, находит сессию в Redis, по её `chemist_id` читает пользователя из БД; нет сессии — `401` |
+| `get_optional_chemist_id` | методы чтения | то же, но без сессии возвращает `None`: гость получает данные, а `is_mine` и `is_liked` у него всегда 0 |
+
+Проверка прав на конкретную запись — в `get_own_material()`: материала нет — `404`,
+материал чужой — `403`. Лайк чужого материала разрешён, поэтому `403` в нём нет.
+
+В swagger куку присылает сам браузер, поэтому достаточно выполнить метод
+аутентификации на той же странице. Схема безопасности `APIKeyCookie` добавлена
+к методам создателя, чтобы в swagger у них был виден замок, а у методов чтения его
+не было. В Postman куку ставят заголовком `Cookie: session_id=...` вручную, скопировав
+значение из вкладки Application браузера.
+
 ### Файлы материалов
 
-Файлы в POST необязательные. Если их не прислали, у черновика остаются медиа
-по умолчанию `default_material.png` и `default_material.mp4`
+Изображение и короткое видео загружаются вместе с материалом методом
+`POST /api/sabatier_materials`. Файлы необязательные: если их не прислали, у черновика
+остаются медиа по умолчанию `default_material.png` и `default_material.mp4`
 (константы `DEFAULT_MATERIAL_IMAGE_NAME` и `DEFAULT_MATERIAL_VIDEO_NAME`) — их отдаёт
-SSR-сервер из `static/img`, в MinIO они не лежат. Заменить медиа у своего материала
-можно методами `PUT /{id}/image` и `PUT /{id}/video`: новый файл уходит в бакет,
-прежний объект из бакета удаляется, а в БД обновляется имя. Файл по умолчанию
-при замене не удаляется — он принадлежит SSR-серверу.
+SSR-сервер из `static/img`, в MinIO они не лежат.
 
 Бакет создаётся при старте сервиса (`ensure_material_bucket()` в `main.py`), и там же
 на **каждом** запуске выставляется его политика: читать объекты может кто угодно,
@@ -104,7 +134,7 @@ PostgreSQL 18, модели — `data/sabatier_models.py`, подключени�
 ## Запуск
 
 ```bash
-docker compose up -d                  # MinIO :9000, Postgres :5434, Adminer :8082
+docker compose up -d                  # MinIO :9000, Postgres :5434, Redis :6379, Adminer :8082
 source synthesis-sabatie/bin/activate
 pip install -r requirements.txt
 python main.py                        # http://127.0.0.1:8000
@@ -116,6 +146,12 @@ Adminer — http://localhost:8082: движок **PostgreSQL**, сервер `po
 
 Консоль MinIO — http://localhost:9001, пользователь `root`, пароль `rootpassword`,
 публичный бакет `sabatie-assets`.
+
+Swagger — http://127.0.0.1:8000/docs. Redis — контейнер `sabatier_redis`, содержимое
+смотрят из терминала: `docker exec -it sabatier_redis redis-cli keys '*'`. Пары
+«ид сессии — логин» по всем активным сессиям выдаёт Lua-скрипт `redis/active_sessions.lua`
+(каталог `redis` примонтирован в контейнер как `/scripts`):
+`docker exec -it sabatier_redis redis-cli --eval /scripts/active_sessions.lua`.
 
 ## Формула
 

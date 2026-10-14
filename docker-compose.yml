@@ -33,6 +33,22 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    container_name: sabatier_redis
+    image: redis:8
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    command: redis-server --save 60 1 --appendonly no
+    volumes:
+      - redis-data:/data
+      - ./redis:/scripts:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   adminer:
     container_name: sabatier_adminer
     image: adminer:latest
@@ -49,3 +65,4 @@ services:
 volumes:
   minio-data:
   postgres-data:
+  redis-data:
